@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classez les outils d'IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f5f8;
+    --surface:#ffffff;
+    --surface-2:#eceef3;
+    --ink:#1c2030;
+    --ink-soft:#565c72;
+    --line:#d7dae3;
+    --accent:#3a3f8f;
+
+    --c1:#1f7a72;
+    --c1-bg:#e2f2ef;
+    --c2:#b3781f;
+    --c2-bg:#f6ecda;
+    --c3:#5847c9;
+    --c3-bg:#e9e5fb;
+    --c4:#c23e6d;
+    --c4-bg:#fbe4ec;
+
+    --ok:#1f8a4c;
+    --ok-bg:#e2f5e9;
+    --bad:#c23e3e;
+    --bad-bg:#fbe6e6;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#14151c;
+      --surface:#1d1f2a;
+      --surface-2:#242635;
+      --ink:#eceef4;
+      --ink-soft:#a3a7ba;
+      --line:#343650;
+      --accent:#8b90ef;
+
+      --c1:#4fc9bd;
+      --c1-bg:#123331;
+      --c2:#e3ab52;
+      --c2-bg:#382b13;
+      --c3:#9b90f2;
+      --c3-bg:#2a2450;
+      --c4:#ec7ea3;
+      --c4-bg:#3a1f2a;
+
+      --ok:#5cd587;
+      --ok-bg:#12301f;
+      --bad:#f08484;
+      --bad-bg:#3a1c1c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14151c;
+    --surface:#1d1f2a;
+    --surface-2:#242635;
+    --ink:#eceef4;
+    --ink-soft:#a3a7ba;
+    --line:#343650;
+    --accent:#8b90ef;
+
+    --c1:#4fc9bd;
+    --c1-bg:#123331;
+    --c2:#e3ab52;
+    --c2-bg:#382b13;
+    --c3:#9b90f2;
+    --c3-bg:#2a2450;
+    --c4:#ec7ea3;
+    --c4-bg:#3a1f2a;
+
+    --ok:#5cd587;
+    --ok-bg:#12301f;
+    --bad:#f08484;
+    --bad-bg:#3a1c1c;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif, "Noto Sans";
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:32px 20px 80px;
+  }
+  h1{
+    font-family:"Sora", system-ui, sans-serif;
+    font-weight:700;
+    font-size:clamp(24px,4vw,34px);
+    line-height:1.15;
+    margin:0 0 10px;
+    max-width:34ch;
+  }
+  .brief{
+    color:var(--ink-soft);
+    font-size:15.5px;
+    line-height:1.55;
+    max-width:62ch;
+    margin:0 0 20px;
+  }
+
+  /* Identification panel */
+  .id-panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:18px;
+  }
+  .id-panel-title{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin:0 0 12px;
+  }
+  .id-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:12px;
+  }
+  @media (max-width:680px){ .id-grid{ grid-template-columns:1fr; } }
+  .id-field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+  }
+  .id-field input{
+    width:100%;
+    padding:9px 11px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    background:var(--surface-2);
+    color:var(--ink);
+    font-size:14px;
+    font-family:inherit;
+  }
+  .id-field input:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+  .id-field input.missing{
+    border-color:var(--bad);
+  }
+
+  /* Top status: timer + progress */
+  .status-panel{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 18px;
+    margin-bottom:18px;
+  }
+  .timer{
+    font-family:"Sora", system-ui, sans-serif;
+    font-weight:700;
+    font-size:20px;
+    color:var(--ink);
+    min-width:64px;
+  }
+  .timer-label{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    font-weight:600;
+    display:block;
+    margin-bottom:2px;
+  }
+  .progress-block{ flex:1; min-width:180px; }
+  .progress-top{
+    display:flex;
+    justify-content:space-between;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .progress-track{
+    height:10px;
+    border-radius:6px;
+    background:var(--surface-2);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:var(--accent);
+    border-radius:6px;
+    transition:width .35s ease;
+  }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-left:auto; }
+  .btn{
+    appearance:none;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:14.5px;
+    font-weight:600;
+    padding:10px 18px;
+    border-radius:9px;
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn:hover{ border-color:var(--accent); }
+  .btn:active{ transform:scale(.97); }
+  .btn[disabled]{ opacity:.45; cursor:not-allowed; transform:none; }
+  .btn-send{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn-send:hover{ opacity:.92; }
+
+  .pool{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:22px;
+    min-height:64px;
+  }
+  .pool-label{ font-size:12.5px; color:var(--ink-soft); margin:0 0 10px; }
+  .pool-cards{ display:flex; flex-wrap:wrap; gap:8px; min-height:38px; }
+  .pool-empty{ font-size:14px; color:var(--ink-soft); padding:6px 2px; }
+
+  .card{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    background:var(--surface-2);
+    border:1.5px solid var(--line);
+    border-radius:9px;
+    padding:9px 10px 9px 14px;
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--ink);
+    cursor:grab;
+    user-select:none;
+    touch-action:none;
+    white-space:nowrap;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .info-btn{
+    flex:none;
+    width:19px;
+    height:19px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:var(--surface);
+    color:var(--ink-soft);
+    font-size:12px;
+    font-weight:700;
+    font-style:italic;
+    line-height:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .info-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .card:active{ cursor:grabbing; }
+  .card.selected{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .card.dragging{
+    position:fixed;
+    z-index:50;
+    pointer-events:none;
+    box-shadow:0 10px 24px rgba(0,0,0,.18);
+    opacity:.96;
+  }
+  .card.correct{
+    border-color:var(--ok);
+    background:var(--ok-bg);
+    color:var(--ok);
+    cursor:default;
+  }
+  .card.shake{ animation:shake .38s ease; }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-5px); }
+    75%{ transform:translateX(5px); }
+  }
+  @media (prefers-reduced-motion: reduce){ .card.shake{ animation:none; } }
+
+  .zones{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:640px){ .zones{ grid-template-columns:1fr; } }
+  .zone{
+    border:2px dashed var(--line);
+    border-radius:14px;
+    padding:16px;
+    min-height:150px;
+    background:var(--surface);
+    transition:border-color .15s ease, background .15s ease;
+    position:relative;
+  }
+  .zone.dropready{ border-style:solid; }
+  .zone[data-cat="1"]{ --zc:var(--c1); --zc-bg:var(--c1-bg); }
+  .zone[data-cat="2"]{ --zc:var(--c2); --zc-bg:var(--c2-bg); }
+  .zone[data-cat="3"]{ --zc:var(--c3); --zc-bg:var(--c3-bg); }
+  .zone[data-cat="4"]{ --zc:var(--c4); --zc-bg:var(--c4-bg); }
+  .zone.dropready{ border-color:var(--zc); background:var(--zc-bg); }
+
+  .zone-head{ display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+  .zone-dot{ width:10px; height:10px; border-radius:50%; background:var(--zc); flex:none; margin-top:4px; }
+  .zone-title{ font-family:"Sora", system-ui, sans-serif; font-weight:700; font-size:16px; color:var(--zc); }
+  .zone-desc{ font-size:13px; color:var(--ink-soft); margin:0 0 10px; max-width:42ch; }
+  .zone-note{
+    font-size:12px;
+    font-style:italic;
+    line-height:1.45;
+    color:var(--ink-soft);
+    background:var(--surface-2);
+    border-radius:8px;
+    padding:8px 10px;
+    margin:0 0 12px;
+    max-width:46ch;
+  }
+  .zone-cards{ display:flex; flex-wrap:wrap; gap:8px; min-height:34px; }
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translateX(-50%) translateY(12px);
+    padding:11px 20px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:15px;
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+    z-index:60;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.ok{ background:var(--ok-bg); color:var(--ok); border:1px solid var(--ok); }
+  .toast.bad{ background:var(--bad-bg); color:var(--bad); border:1px solid var(--bad); }
+
+  .def-popover{
+    position:fixed;
+    z-index:70;
+    max-width:260px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    box-shadow:0 10px 26px rgba(0,0,0,.2);
+    opacity:0;
+    transform:translateY(6px);
+    pointer-events:none;
+    transition:opacity .15s ease, transform .15s ease;
+  }
+  .def-popover.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
+  .def-popover h4{
+    margin:0 0 4px;
+    font-family:"Sora", system-ui, sans-serif;
+    font-size:14px;
+    color:var(--accent);
+  }
+  .def-popover p{
+    margin:0;
+    font-size:13px;
+    line-height:1.45;
+    color:var(--ink);
+    font-weight:400;
+  }
+
+  .result-banner{
+    display:none;
+    flex-direction:column;
+    gap:12px;
+    background:var(--ok-bg);
+    border:1px solid var(--ok);
+    color:var(--ok);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-top:20px;
+  }
+  .result-banner.show{ display:flex; }
+  .result-title{ font-weight:700; font-size:16px; }
+  .result-detail{ font-size:13.5px; color:var(--ink); opacity:.85; }
+  .send-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .send-note{ font-size:12px; color:var(--ink-soft); }
+
+  footer{ margin-top:36px; font-size:12.5px; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Classez les outils d'IA</h1>
+  <p class="brief">Chaque outil ci-dessous utilise l'intelligence artificielle d'une façon différente. Faites glisser (ou touchez, puis touchez une catégorie) chacun des 20 outils vers la famille qui décrit le mieux ce qu'il fait. Cliquez sur le <strong>ⓘ</strong> à côté d'un outil pour voir une courte définition. Vous saurez tout de suite si votre réponse est bonne.</p>
+
+  <div class="id-panel">
+    <p class="id-panel-title">Identification (pour l'envoi du résultat à la fin)</p>
+    <div class="id-grid">
+      <div class="id-field">
+        <label for="studentName">Ton nom</label>
+        <input type="text" id="studentName" placeholder="Prénom et nom">
+      </div>
+      <div class="id-field">
+        <label for="schoolCenter">Centre de services scolaire</label>
+        <input type="text" id="schoolCenter" placeholder="Nom du centre">
+      </div>
+      <div class="id-field">
+        <label for="teacherEmail">Courriel de l'enseignant·e</label>
+        <input type="email" id="teacherEmail" placeholder="nom@csXX.qc.ca">
+      </div>
+    </div>
+  </div>
+
+  <div class="status-panel">
+    <div>
+      <span class="timer-label">Temps</span>
+      <span class="timer" id="timerDisplay">00:00</span>
+    </div>
+    <div class="progress-block">
+      <div class="progress-top"><span>Progression</span><span id="progressText">0 / 20</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="resetBtn">Recommencer</button>
+    </div>
+  </div>
+
+  <div class="pool">
+    <p class="pool-label">Outils à classer</p>
+    <div class="pool-cards" id="poolCards"></div>
+    <p class="pool-empty" id="poolEmpty" style="display:none;"></p>
+  </div>
+
+  <div class="zones" id="zones">
+    <div class="zone" data-cat="1">
+      <div class="zone-head"><span class="zone-dot"></span><span class="zone-title">L'IA reconnaît et classe</span></div>
+      <p class="zone-desc">Elle identifie, trie ou étiquette ce qu'elle perçoit (image, voix, texte).</p>
+      <div class="zone-cards" id="zoneCards-1"></div>
+    </div>
+    <div class="zone" data-cat="2">
+      <div class="zone-head"><span class="zone-dot"></span><span class="zone-title">L'IA émet des recommandations</span></div>
+      <p class="zone-desc">Elle suggère un contenu ou un produit selon vos goûts et habitudes.</p>
+      <div class="zone-cards" id="zoneCards-2"></div>
+    </div>
+    <div class="zone" data-cat="3">
+      <div class="zone-head"><span class="zone-dot"></span><span class="zone-title">L'IA communique</span></div>
+      <p class="zone-desc">Elle échange avec vous par la conversation, à l'oral ou à l'écrit.</p>
+      <p class="zone-note">💡 Les robots conversationnels génératifs (ChatGPT, Copilot, Gemini, Claude) génèrent surtout du texte — certains peuvent aussi créer des images — mais pour cet exercice, on les classe ici, dans « communique ».</p>
+      <div class="zone-cards" id="zoneCards-3"></div>
+    </div>
+    <div class="zone" data-cat="4">
+      <div class="zone-head"><span class="zone-dot"></span><span class="zone-title">L'IA génère du contenu</span></div>
+      <p class="zone-desc">Elle crée un texte, une image, une voix ou une vidéo nouvelle.</p>
+      <div class="zone-cards" id="zoneCards-4"></div>
+    </div>
+  </div>
+
+  <div class="result-banner" id="resultBanner"></div>
+
+  <footer>Inspiré du modèle de tri du CCDMD (module Familles).</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="def-popover" id="defPopover"><h4 id="defPopoverTitle"></h4><p id="defPopoverText"></p></div>
+
+<script>
+(function(){
+  const TOOLS = [
+    {id:"lens", name:"Google Lens", cat:1, def:"Application qui identifie des objets, des textes, des plantes ou des lieux à partir d'une photo prise avec le téléphone."},
+    {id:"facial", name:"Reconnaissance faciale", cat:1, def:"Technologie qui identifie ou vérifie l'identité d'une personne à partir des traits de son visage."},
+    {id:"vocale", name:"Reconnaissance vocale", cat:1, def:"Technologie qui transforme la parole en texte ou qui reconnaît qui est en train de parler."},
+    {id:"spam", name:"Détection de spam", cat:1, def:"Système qui analyse les courriels pour repérer et filtrer automatiquement les messages indésirables."},
+    {id:"classim", name:"Classification d'images", cat:1, def:"L'IA trie automatiquement des images selon ce qu'elles contiennent (un animal, un objet, un paysage, etc.)."},
+
+    {id:"netflix", name:"Netflix", cat:2, def:"Plateforme de films et de séries qui vous suggère du contenu selon ce que vous avez déjà écouté."},
+    {id:"spotify", name:"Spotify", cat:2, def:"Service d'écoute de musique qui propose des chansons et des listes selon vos goûts musicaux."},
+    {id:"youtube", name:"YouTube", cat:2, def:"Plateforme vidéo dont l'algorithme recommande des vidéos selon votre historique de visionnement."},
+    {id:"amazon", name:"Amazon", cat:2, def:"Site de magasinage en ligne qui suggère des produits selon vos achats et vos recherches passées."},
+    {id:"tiktok", name:"TikTok", cat:2, def:"Application vidéo dont l'algorithme propose un fil personnalisé selon vos interactions (visionnements, mentions J'aime)."},
+
+    {id:"chatgpt", name:"ChatGPT", cat:3, def:"Robot conversationnel qui répond à vos questions et discute avec vous par écrit, principalement en générant du texte."},
+    {id:"copilot", name:"Microsoft Copilot", cat:3, def:"Assistant conversationnel intégré aux logiciels Microsoft qui répond à vos questions et aide à rédiger du texte."},
+    {id:"gemini", name:"Gemini", cat:3, def:"Robot conversationnel de Google qui répond à des questions, discute et peut aider à accomplir des tâches."},
+    {id:"claude", name:"Claude", cat:3, def:"Robot conversationnel d'Anthropic qui discute avec vous et aide à rédiger, résumer ou réfléchir à un sujet."},
+    {id:"siri", name:"Siri", cat:3, def:"Assistant vocal d'Apple qui répond à vos demandes orales et exécute des commandes sur l'appareil."},
+
+    {id:"dalle", name:"DALL-E", cat:4, def:"Outil qui crée des images originales à partir d'une description écrite (un prompt)."},
+    {id:"midjourney", name:"Midjourney", cat:4, def:"Outil qui génère des images de style artistique à partir d'une description textuelle."},
+    {id:"canva", name:"Canva Magic Design", cat:4, def:"Fonction de Canva qui génère automatiquement des mises en page ou des visuels à partir de votre contenu."},
+    {id:"suno", name:"Suno", cat:4, def:"Outil qui compose de la musique et des chansons complètes à partir d'une description ou de paroles."},
+    {id:"firefly", name:"Adobe Firefly", cat:4, def:"Outil d'Adobe qui génère des images, des effets ou des textures à partir d'une description textuelle."},
+  ];
+
+  const CAT_NAMES = {
+    1:"L'IA reconnaît et classe",
+    2:"L'IA émet des recommandations",
+    3:"L'IA communique",
+    4:"L'IA génère du contenu"
+  };
+
+  let placement = {};
+  let locked = {};
+  TOOLS.forEach(t => { placement[t.id] = 0; locked[t.id] = false; });
+
+  const order = TOOLS.map(t=>t.id);
+  for(let i=order.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [order[i],order[j]] = [order[j],order[i]];
+  }
+
+  const poolCards = document.getElementById('poolCards');
+  const poolEmpty = document.getElementById('poolEmpty');
+  const resetBtn = document.getElementById('resetBtn');
+  const resultBanner = document.getElementById('resultBanner');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const toast = document.getElementById('toast');
+  const defPopover = document.getElementById('defPopover');
+  const defPopoverTitle = document.getElementById('defPopoverTitle');
+  const defPopoverText = document.getElementById('defPopoverText');
+  const studentNameEl = document.getElementById('studentName');
+  const schoolCenterEl = document.getElementById('schoolCenter');
+  const teacherEmailEl = document.getElementById('teacherEmail');
+  const zoneEls = {1:document.getElementById('zoneCards-1'),2:document.getElementById('zoneCards-2'),3:document.getElementById('zoneCards-3'),4:document.getElementById('zoneCards-4')};
+  const zones = document.querySelectorAll('.zone');
+
+  let selectedId = null;
+  let dragEl = null, dragId = null, dragStartX=0, dragStartY=0, dragging=false, dragOffX=0, dragOffY=0;
+  let timerInterval = null, elapsedSec = 0, timerStarted = false, finished = false;
+
+  function toolById(id){ return TOOLS.find(t=>t.id===id); }
+
+  let openDefId = null;
+  function showDef(t, anchorEl){
+    defPopoverTitle.textContent = t.name;
+    defPopoverText.textContent = t.def || "";
+    defPopover.classList.add('show');
+    const r = anchorEl.getBoundingClientRect();
+    const popW = 260;
+    let left = r.left;
+    if(left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+    if(left < 12) left = 12;
+    let top = r.bottom + 8;
+    defPopover.style.left = left + "px";
+    defPopover.style.top = top + "px";
+    const popRect = defPopover.getBoundingClientRect();
+    if(popRect.bottom > window.innerHeight - 10){
+      defPopover.style.top = (r.top - popRect.height - 8) + "px";
+    }
+    openDefId = t.id;
+  }
+  function hideDef(){
+    defPopover.classList.remove('show');
+    openDefId = null;
+  }
+  document.addEventListener('click', (e)=>{
+    if(!openDefId) return;
+    if(e.target.closest('.def-popover') || e.target.closest('.info-btn')) return;
+    hideDef();
+  });
+  window.addEventListener('scroll', hideDef, true);
+
+  function startTimerIfNeeded(){
+    if(timerStarted || finished) return;
+    timerStarted = true;
+    timerInterval = setInterval(()=>{ elapsedSec++; updateTimerDisplay(); }, 1000);
+  }
+  function stopTimer(){ if(timerInterval){ clearInterval(timerInterval); timerInterval = null; } }
+  function updateTimerDisplay(){
+    const m = String(Math.floor(elapsedSec/60)).padStart(2,'0');
+    const s = String(elapsedSec%60).padStart(2,'0');
+    timerDisplay.textContent = m + ":" + s;
+  }
+  function formattedTime(){ return timerDisplay.textContent; }
+
+  function showToast(ok){
+    toast.textContent = ok ? "✅ Bravo !" : "❌ Essaie encore.";
+    toast.className = "toast show " + (ok ? "ok" : "bad");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>{ toast.classList.remove('show'); }, 1200);
+  }
+
+  function buildSummary(){
+    const name = studentNameEl.value.trim() || "(nom non fourni)";
+    const center = schoolCenterEl.value.trim() || "(centre non fourni)";
+    const dateStr = new Date().toLocaleDateString('fr-CA', {year:'numeric', month:'long', day:'numeric'});
+    return "Résultat — Classement des outils d'IA\n"
+      + "Élève : " + name + "\n"
+      + "Centre de services scolaire : " + center + "\n"
+      + "Statut : Complété — 20 / 20 outils bien classés\n"
+      + "Temps : " + formattedTime() + "\n"
+      + "Date : " + dateStr;
+  }
+
+  function markMissing(el, missing){ el.classList.toggle('missing', missing); }
+
+  function checkIdFields(requireEmail){
+    let ok = true;
+    const name = studentNameEl.value.trim();
+    const center = schoolCenterEl.value.trim();
+    const email = teacherEmailEl.value.trim();
+    markMissing(studentNameEl, !name); if(!name) ok = false;
+    markMissing(schoolCenterEl, !center); if(!center) ok = false;
+    if(requireEmail){ markMissing(teacherEmailEl, !email); if(!email) ok = false; }
+    return ok;
+  }
+
+  function sendByEmail(){
+    if(!checkIdFields(true)){
+      showToast(false);
+      toast.textContent = "❌ Remplis ton nom, ton centre et le courriel.";
+      toast.className = "toast show bad";
+      return;
+    }
+    const name = studentNameEl.value.trim();
+    const subject = "Résultat - Classement des outils d'IA - " + name;
+    const body = buildSummary();
+    const url = "mailto:" + encodeURIComponent(teacherEmailEl.value.trim())
+      + "?subject=" + encodeURIComponent(subject)
+      + "&body=" + encodeURIComponent(body);
+    window.location.href = url;
+  }
+
+  function copySummary(){
+    if(!checkIdFields(false)){
+      toast.textContent = "❌ Remplis au moins ton nom et ton centre.";
+      toast.className = "toast show bad";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>{ toast.classList.remove('show'); }, 1600);
+      return;
+    }
+    const text = buildSummary();
+    const done = ()=>{
+      toast.textContent = "✅ Résumé copié — colle-le où tu veux l'envoyer.";
+      toast.className = "toast show ok";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>{ toast.classList.remove('show'); }, 1800);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+  function fallbackCopy(text, done){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  function updateProgress(){
+    const correctCount = TOOLS.filter(t=>locked[t.id]).length;
+    const pct = Math.round((correctCount/TOOLS.length)*100);
+    progressFill.style.width = pct + "%";
+    progressText.textContent = correctCount + " / " + TOOLS.length;
+    if(correctCount === TOOLS.length && !finished){
+      finished = true;
+      stopTimer();
+      renderCompletionBanner();
+    }
+  }
+
+  function renderCompletionBanner(){
+    resultBanner.innerHTML = "";
+    const title = document.createElement('div');
+    title.className = "result-title";
+    title.textContent = "🎉 Terminé ! Les 20 outils sont bien classés en " + formattedTime() + ".";
+    const detail = document.createElement('div');
+    detail.className = "result-detail";
+    detail.textContent = "Remplis les champs d'identification ci-dessus, puis envoie ton résultat à ton enseignant·e.";
+    const row = document.createElement('div');
+    row.className = "send-row";
+    const sendBtn = document.createElement('button');
+    sendBtn.className = "btn btn-send";
+    sendBtn.textContent = "📧 Envoyer le résultat par courriel";
+    sendBtn.addEventListener('click', sendByEmail);
+    const copyBtn = document.createElement('button');
+    copyBtn.className = "btn";
+    copyBtn.textContent = "📋 Copier le résumé";
+    copyBtn.addEventListener('click', copySummary);
+    row.appendChild(sendBtn);
+    row.appendChild(copyBtn);
+    const note = document.createElement('div');
+    note.className = "send-note";
+    note.textContent = "« Envoyer par courriel » ouvre ton application de courriel avec le message déjà rempli. « Copier le résumé » permet de le coller ailleurs (Teams, formulaire, etc.).";
+    resultBanner.appendChild(title);
+    resultBanner.appendChild(detail);
+    resultBanner.appendChild(row);
+    resultBanner.appendChild(note);
+    resultBanner.classList.add('show');
+  }
+
+  function render(){
+    hideDef();
+    poolCards.innerHTML = "";
+    zoneEls[1].innerHTML = ""; zoneEls[2].innerHTML = ""; zoneEls[3].innerHTML = ""; zoneEls[4].innerHTML = "";
+
+    let poolN = 0;
+    order.forEach(id=>{
+      const t = toolById(id);
+      const card = buildCard(t);
+      if(placement[id] === 0){
+        poolN++;
+        poolCards.appendChild(card);
+      } else {
+        zoneEls[placement[id]].appendChild(card);
+      }
+    });
+    poolEmpty.style.display = poolN === 0 && !finished ? "block" : "none";
+    if(poolN === 0 && !finished){
+      poolEmpty.textContent = "Presque ! Corrigez les outils marqués en rouge dans les familles.";
+    }
+    updateProgress();
+  }
+
+  function buildCard(t){
+    const el = document.createElement('div');
+    el.className = "card";
+    el.dataset.id = t.id;
+    if(locked[t.id]) el.classList.add("correct");
+    if(selectedId === t.id) el.classList.add("selected");
+
+    const label = document.createElement('span');
+    label.textContent = t.name;
+    el.appendChild(label);
+
+    const infoBtn = document.createElement('span');
+    infoBtn.className = "info-btn";
+    infoBtn.textContent = "i";
+    infoBtn.setAttribute('role','button');
+    infoBtn.setAttribute('aria-label', "Définition de " + t.name);
+    infoBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
+    infoBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(openDefId === t.id){ hideDef(); } else { showDef(t, infoBtn); }
+    });
+    el.appendChild(infoBtn);
+
+    el.addEventListener('pointerdown', onPointerDown);
+    return el;
+  }
+
+  function onPointerDown(e){
+    const id = e.currentTarget.dataset.id;
+    if(locked[id]) return;
+    dragId = id;
+    dragEl = e.currentTarget;
+    dragStartX = e.clientX; dragStartY = e.clientY;
+    dragging = false;
+    const rect = dragEl.getBoundingClientRect();
+    dragOffX = e.clientX - rect.left;
+    dragOffY = e.clientY - rect.top;
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  }
+
+  function onPointerMove(e){
+    const dx = e.clientX - dragStartX, dy = e.clientY - dragStartY;
+    if(!dragging && Math.hypot(dx,dy) > 6){
+      dragging = true;
+      dragEl.classList.add('dragging');
+      dragEl.style.width = dragEl.offsetWidth + "px";
+    }
+    if(dragging){
+      dragEl.style.left = (e.clientX - dragOffX) + "px";
+      dragEl.style.top = (e.clientY - dragOffY) + "px";
+      updateZoneHover(e.clientX, e.clientY);
+    }
+  }
+
+  function updateZoneHover(x,y){
+    zones.forEach(z=>{
+      const r = z.getBoundingClientRect();
+      const over = x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+      z.classList.toggle('dropready', over);
+    });
+  }
+
+  function zoneAt(x,y){
+    for(const z of zones){
+      const r = z.getBoundingClientRect();
+      if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return Number(z.dataset.cat);
+    }
+    return null;
+  }
+
+  function placeAndCheck(id, cat){
+    startTimerIfNeeded();
+    const t = toolById(id);
+    const ok = t.cat === cat;
+    showToast(ok);
+    if(ok){
+      placement[id] = cat;
+      locked[id] = true;
+      render();
+    } else {
+      placement[id] = 0;
+      render();
+      requestAnimationFrame(()=>{
+        const el = poolCards.querySelector('[data-id="'+id+'"]');
+        if(el){
+          el.classList.add('shake');
+          setTimeout(()=>el.classList.remove('shake'), 380);
+        }
+      });
+    }
+  }
+
+  function onPointerUp(e){
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    zones.forEach(z=>z.classList.remove('dropready'));
+
+    if(dragging){
+      dragEl.classList.remove('dragging');
+      dragEl.style.width = ""; dragEl.style.left = ""; dragEl.style.top = "";
+      const cat = zoneAt(e.clientX, e.clientY);
+      if(cat){
+        selectedId = null;
+        placeAndCheck(dragId, cat);
+      }
+    } else {
+      selectedId = (selectedId === dragId) ? null : dragId;
+      render();
+    }
+    dragId = null; dragEl = null; dragging = false;
+  }
+
+  zones.forEach(z=>{
+    z.addEventListener('click', ()=>{
+      if(selectedId){
+        const cat = Number(z.dataset.cat);
+        const id = selectedId;
+        selectedId = null;
+        placeAndCheck(id, cat);
+      }
+    });
+  });
+  document.querySelector('.pool').addEventListener('click', (e)=>{
+    if(e.target.closest('.card')) return;
+    if(selectedId){ selectedId = null; render(); }
+  });
+
+  [studentNameEl, schoolCenterEl, teacherEmailEl].forEach(el=>{
+    el.addEventListener('input', ()=> el.classList.remove('missing'));
+  });
+
+  function fullReset(){
+    TOOLS.forEach(t=>{ placement[t.id]=0; locked[t.id]=false; });
+    selectedId = null;
+    stopTimer();
+    elapsedSec = 0; timerStarted = false; finished = false;
+    updateTimerDisplay();
+    resultBanner.classList.remove('show');
+    resultBanner.innerHTML = "";
+    render();
+  }
+  resetBtn.addEventListener('click', fullReset);
+
+  updateTimerDisplay();
+  render();
+})();
+</script>
+</body>
+</html>
