@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L'IA n'est pas intelligente</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#1d2433; --muted:#5b6475; --line:#e2ddd2;
+    --accent:#1f5fbf; --accent-ink:#ffffff; --good:#1e8a4c; --good-bg:#e5f4ea;
+    --bad:#c0392b; --bad-bg:#fbe9e7; --todo:#d5d0c4; --shadow:0 10px 30px rgba(20,30,50,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171d; --card:#1e232c; --ink:#eef1f6; --muted:#a3abba; --line:#2f3642;
+      --accent:#5b9bff; --accent-ink:#0b1220; --good:#4cc47f; --good-bg:#183326;
+      --bad:#ff7b6b; --bad-bg:#3a1f1c; --todo:#3a4150; --shadow:0 10px 30px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+  header .tag{display:inline-block;font-size:.8rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(1.3rem,3.5vw,1.9rem);line-height:1.25;margin:.25rem 0 .5rem}
+  .consigne{color:var(--muted);margin:0 0 16px}
+  .video{position:relative;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+  .video iframe,#player{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .progress{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+  .dots{display:flex;gap:8px}
+  .dot{width:26px;height:26px;border-radius:50%;background:var(--todo);display:grid;place-items:center;font-size:.75rem;font-weight:700;color:var(--card)}
+  .dot.good{background:var(--good)} .dot.bad{background:var(--bad)}
+  .stat{font-weight:600} .stat span{color:var(--accent)}
+  .btn{appearance:none;border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+  .btn:focus-visible,.choice:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .hidden{display:none!important}
+  /* Fenêtre de question */
+  .modal{position:fixed;inset:0;background:rgba(10,14,22,.6);display:grid;place-items:center;padding:16px;z-index:10}
+  .panel{background:var(--card);color:var(--ink);width:100%;max-width:620px;border-radius:16px;padding:22px;box-shadow:var(--shadow);max-height:92vh;overflow:auto}
+  .qhead{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .qtext{font-size:1.15rem;font-weight:700;margin:0 0 14px}
+  .choices{display:grid;gap:10px}
+  .choice{text-align:left;width:100%;border:2px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer;display:flex;gap:10px}
+  .choice:hover:not(:disabled){border-color:var(--accent)}
+  .choice b{flex:none;width:24px;height:24px;border-radius:6px;background:var(--line);display:grid;place-items:center;font-size:.85rem}
+  .choice.good{border-color:var(--good);background:var(--good-bg)} .choice.bad{border-color:var(--bad);background:var(--bad-bg)}
+  .choice:disabled{cursor:default}
+  .feedback{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:5px solid}
+  .feedback.good{background:var(--good-bg);border-color:var(--good)} .feedback.bad{background:var(--bad-bg);border-color:var(--bad)}
+  .feedback strong{display:block;margin-bottom:4px}
+  .actions{margin-top:16px;display:flex;justify-content:flex-end}
+  /* Carte finale */
+  .final{margin-top:20px;background:var(--card);border:3px solid var(--accent);border-radius:18px;padding:24px;text-align:center;box-shadow:var(--shadow)}
+  .final .label{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:.85rem}
+  .final .score{font-size:clamp(4rem,16vw,7rem);font-weight:800;line-height:1;margin:8px 0;color:var(--accent)}
+  .final .vtitle{font-weight:600;margin:0 0 14px}
+  .final input{font:inherit;padding:10px 12px;border:2px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);width:min(100%,360px);text-align:center}
+  .final .dots{justify-content:center;margin:14px 0}
+  .final .instr{margin:16px auto 0;max-width:560px;background:var(--bg);border-radius:12px;padding:12px 14px;font-weight:600}
+  .final .date{color:var(--muted);font-size:.9rem;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="tag">Citoyenneté IA · Activité vidéo</span>
+    <h1 id="titre"></h1>
+    <p class="consigne">Lance la vidéo. Elle s'arrêtera 8 fois pour te poser une question. Choisis la meilleure réponse, puis lis l'explication.</p>
+  </header>
+
+  <div class="video"><div id="player"></div></div>
+
+  <div class="progress" aria-live="polite">
+    <div class="stat">Question <span id="qnum">0</span>/8</div>
+    <div class="dots" id="dots"></div>
+    <div class="stat">Pointage : <span id="score">0</span>/8</div>
+  </div>
+
+  <div class="actions"><button class="btn hidden" id="voirResultat">Voir mon résultat final</button></div>
+
+  <section class="final hidden" id="final">
+    <div class="label">Résultat final</div>
+    <div class="score" id="finalScore">0/8</div>
+    <p class="vtitle" id="finalTitre"></p>
+    <input id="nom" type="text" placeholder="Écris ton nom ici" aria-label="Ton nom">
+    <div class="dots" id="finalDots"></div>
+    <div class="date" id="date"></div>
+    <p class="instr">📸 Fais une capture d'écran de cette carte et dépose-la dans ton OneNote ou ton portfolio pour la remettre à ton enseignant.</p>
+  </section>
+</div>
+
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="qtext">
+  <div class="panel">
+    <div class="qhead"><span id="qcount"></span><span id="qtime"></span></div>
+    <p class="qtext" id="qtext"></p>
+    <div class="choices" id="choices"></div>
+    <div id="feedback"></div>
+    <div class="actions"><button class="btn hidden" id="continuer"></button></div>
+  </div>
+</div>
+
+<script>
+const ACTIVITE = {
+  titre: "Le saviez-vous ? L’intelligence artificielle n’est pas… intelligente",
+  videoType: "youtube",
+  videoId: "m0Xywn-Exk4",
+  duree_totale_sec: 232,
+  questions: [
+    { chapitre: "Ce que désigne vraiment l'IA", temps_sec: 33, retour_en_arriere_si_erreur_sec: 22,
+      question: "Selon la vidéo, que désigne en réalité l'« intelligence artificielle » ?",
+      choix: ["Un cerveau électronique doté d'une conscience",
+              "Des techniques informatiques comme l'apprentissage profond et l'apprentissage machine",
+              "Un robot capable de penser comme un humain",
+              "Un programme écrit ligne par ligne pour chaque situation"],
+      bonne_reponse: 1,
+      retroaction: "L'IA regroupe des techniques informatiques : l'apprentissage profond (deep learning) et l'apprentissage machine (machine learning). [00:22]" },
+    { chapitre: "Apprendre à partir de données", temps_sec: 56, retour_en_arriere_si_erreur_sec: 34,
+      question: "Comment un logiciel d'IA arrive-t-il à exécuter une tâche ?",
+      choix: ["Un programmeur prévoit chaque étape du début à la fin",
+              "Il copie les décisions des humains en temps réel",
+              "Il apprend par lui-même en analysant des millions de données",
+              "Il essaie au hasard jusqu'à réussir"],
+      bonne_reponse: 2,
+      retroaction: "Le logiciel n'a pas besoin d'être programmé du début à la fin : il s'ajuste lui-même à partir de millions de données, par exemple des photos de chats analysées pixel par pixel. [00:34]" },
+    { chapitre: "Aucune conscience", temps_sec: 74, retour_en_arriere_si_erreur_sec: 61,
+      question: "Une IA a appris à reconnaître des chats sur des photos. Que peut-on en conclure ?",
+      choix: ["Elle sait si un chat est dangereux pour les humains",
+              "Elle comprend ce qu'est un chat",
+              "Elle a développé une forme de conscience",
+              "Elle repère des motifs dans les pixels sans comprendre ce qu'elle fait"],
+      bonne_reponse: 3,
+      retroaction: "L'IA n'a aucune conscience : elle ne comprend pas ce qu'elle fait et ne peut pas juger si un chat est gentil ou dangereux. [01:01]" },
+    { chapitre: "L'origine du mot (1956)", temps_sec: 106, retour_en_arriere_si_erreur_sec: 77,
+      question: "Pourquoi des chercheurs américains ont-ils popularisé l'expression « intelligence artificielle » en 1956 ?",
+      choix: ["Pour obtenir du financement public grâce à un nom accrocheur",
+              "Parce que leur machine avait réussi un test de conscience",
+              "Pour remplacer le mot « ordinateur »",
+              "Parce qu'une IA venait de battre un champion d'échecs"],
+      bonne_reponse: 0,
+      retroaction: "L'origine du terme est historique et marketing : un nom qui sonne bien a aidé ces chercheurs à obtenir des crédits publics pour leurs travaux. [01:17]" },
+    { chapitre: "Des tâches spécialisées", temps_sec: 142, retour_en_arriere_si_erreur_sec: 129,
+      question: "Battre un champion d'échecs, gagner au go, analyser des radiographies : qu'ont ces exploits en commun ?",
+      choix: ["Ils ont été réalisés par une seule et même IA",
+              "Ce sont des tâches extrêmement spécialisées",
+              "Ils prouvent que l'IA dépasse le cerveau humain",
+              "Ils ont tous eu lieu en 2016"],
+      bonne_reponse: 1,
+      retroaction: "Chaque IA est conçue pour une tâche très précise. Aucune IA généraliste ne s'adapte à toutes sortes de situations comme le cerveau humain. [02:09]" },
+    { chapitre: "La peur d'une super-IA", temps_sec: 162, retour_en_arriere_si_erreur_sec: 147,
+      question: "Que soutient l'auteur au sujet d'une IA supérieure à l'humain qui dominerait le monde ?",
+      choix: ["Elle existe déjà en secret",
+              "Elle apparaîtra d'ici quelques années",
+              "Selon lui, elle n'existera très certainement jamais",
+              "Elle est déjà interdite par la loi"],
+      bonne_reponse: 2,
+      retroaction: "L'auteur juge ce scénario impossible. C'est son opinion, exprimée en 2020 : des spécialistes en débattent encore aujourd'hui. [02:27]" },
+    { chapitre: "L'éthique de l'IA", temps_sec: 181, retour_en_arriere_si_erreur_sec: 161,
+      question: "Selon la vidéo, en quoi consiste l'éthique de l'IA ?",
+      choix: ["Rendre l'IA plus rapide que les autres logiciels",
+              "Interdire toute utilisation de l'IA",
+              "Apprendre à l'IA à ressentir des émotions",
+              "Veiller à ce que ses résultats ne discriminent pas, par exemple selon le sexe ou la couleur de peau"],
+      bonne_reponse: 3,
+      retroaction: "Il faut programmer l'IA avec soin pour que ses résultats respectent nos principes éthiques, par exemple en évitant de trier les gens selon leur sexe ou leur couleur de peau. [02:41]" },
+    { chapitre: "Les assistants vocaux", temps_sec: 206, retour_en_arriere_si_erreur_sec: 179,
+      question: "Selon la vidéo, comment fonctionne un assistant vocal ?",
+      choix: ["Il réagit à des mots clés programmés à l'avance",
+              "Il tient une vraie conversation suivie",
+              "Il apprend de chaque échange avec l'utilisateur",
+              "Il comprend le sens de ce qu'on lui dit"],
+      bonne_reponse: 0,
+      retroaction: "Seule la reconnaissance de la parole utilise l'IA. L'assistant, lui, réagit à des mots clés prévus d'avance et n'apprend rien des échanges (constat fait en 2020). [02:59]" }
+  ]
+};
+
+const Q = ACTIVITE.questions, N = Q.length;
+const etat = { reponses: Array(N).fill(null), courante: -1, score: 0, fin: false };
+const $ = id => document.getElementById(id);
+const mmss = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+
+$("titre").textContent = ACTIVITE.titre;
+$("finalTitre").textContent = ACTIVITE.titre;
+
+function dessinerPoints(cible){
+  cible.innerHTML = "";
+  etat.reponses.forEach((r,i)=>{
+    const d = document.createElement("div");
+    d.className = "dot" + (r===true?" good":r===false?" bad":"");
+    d.textContent = i+1;
+    d.title = "Question "+(i+1);
+    cible.appendChild(d);
+  });
+}
+function majProgression(){
+  const faites = etat.reponses.filter(r=>r!==null).length;
+  $("qnum").textContent = faites;
+  $("score").textContent = etat.score;
+  dessinerPoints($("dots"));
+  if (faites===N) $("voirResultat").classList.remove("hidden");
+}
+majProgression();
+
+/* Lecteur YouTube */
+let player, minuterie;
+const tag = document.createElement("script");
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
+
+function onYouTubeIframeAPIReady(){
+  player = new YT.Player("player", {
+    videoId: ACTIVITE.videoId,
+    playerVars: { rel:0, modestbranding:1, fs:0, playsinline:1 },
+    events: { onStateChange: e => {
+      if (e.data === YT.PlayerState.PLAYING) demarrerSurveillance();
+      else clearInterval(minuterie);
+      if (e.data === YT.PlayerState.ENDED && etat.reponses.every(r=>r!==null)) afficherFinal();
+    }}
+  });
+}
+
+function demarrerSurveillance(){
+  clearInterval(minuterie);
+  minuterie = setInterval(()=>{
+    if (!player || etat.courante !== -1) return;
+    const t = player.getCurrentTime();
+    const i = etat.reponses.findIndex(r=>r===null);
+    if (i === -1) return;
+    if (t >= Q[i].temps_sec) {
+      // Empêche de sauter une question en avançant la vidéo
+      if (t > Q[i].temps_sec + 2) player.seekTo(Q[i].temps_sec, true);
+      ouvrirQuestion(i);
+    }
+  }, 250);
+}
+
+function ouvrirQuestion(i){
+  etat.courante = i;
+  player.pauseVideo();
+  const q = Q[i];
+  $("qcount").textContent = "Question "+(i+1)+"/"+N+" · "+q.chapitre;
+  $("qtime").textContent = mmss(q.temps_sec);
+  $("qtext").textContent = q.question;
+  $("feedback").innerHTML = "";
+  $("continuer").classList.add("hidden");
+  const box = $("choices"); box.innerHTML = "";
+  q.choix.forEach((c,k)=>{
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.innerHTML = "<b>"+"ABCD"[k]+"</b><span></span>";
+    b.querySelector("span").textContent = c;
+    b.onclick = ()=>repondre(i,k);
+    box.appendChild(b);
+  });
+  $("modal").classList.remove("hidden");
+  box.firstChild.focus();
+}
+
+function repondre(i,k){
+  const q = Q[i], ok = k === q.bonne_reponse;
+  etat.reponses[i] = ok; if (ok) etat.score++;
+  const btns = [...$("choices").children];
+  btns.forEach((b,j)=>{
+    b.disabled = true;
+    if (j===q.bonne_reponse) b.classList.add("good");
+    else if (j===k) b.classList.add("bad");
+  });
+  const fb = document.createElement("div");
+  fb.className = "feedback " + (ok?"good":"bad");
+  const titre = document.createElement("strong");
+  titre.textContent = ok ? "Bonne réponse" : "Bonne réponse : "+"ABCD"[q.bonne_reponse]+". "+q.choix[q.bonne_reponse];
+  const txt = document.createElement("div"); txt.textContent = q.retroaction;
+  fb.append(titre, txt);
+  $("feedback").appendChild(fb);
+  const c = $("continuer");
+  c.textContent = ok ? "Continuer la vidéo" : "Revoir le passage ("+mmss(q.retour_en_arriere_si_erreur_sec)+") et continuer";
+  c.onclick = ()=>fermer(ok ? null : q.retour_en_arriere_si_erreur_sec);
+  c.classList.remove("hidden");
+  c.focus();
+  majProgression();
+}
+
+function fermer(retour){
+  $("modal").classList.add("hidden");
+  etat.courante = -1;
+  if (retour !== null) player.seekTo(retour, true);
+  player.playVideo();
+}
+
+function afficherFinal(){
+  if (etat.fin) return; etat.fin = true;
+  $("finalScore").textContent = etat.score+"/"+N;
+  dessinerPoints($("finalDots"));
+  $("date").textContent = "Complété le " + new Date().toLocaleDateString("fr-CA",{dateStyle:"long"});
+  $("final").classList.remove("hidden");
+  $("voirResultat").classList.add("hidden");
+  $("final").scrollIntoView({behavior:"smooth"});
+  $("nom").focus({preventScroll:true});
+}
+$("voirResultat").onclick = ()=>{ if (player) player.pauseVideo(); afficherFinal(); };
+</script>
+</body>
+</html>
