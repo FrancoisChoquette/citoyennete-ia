@@ -125,48 +125,6 @@
     <p class="small">Raccourcis de capture d'écran : Windows <kbd>Win</kbd>+<kbd>Maj</kbd>+<kbd>S</kbd> · Mac <kbd>Cmd</kbd>+<kbd>Maj</kbd>+<kbd>4</kbd> · Chromebook <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Afficher les fenêtres</kbd></p>
   </section>
 
-  <!-- Portrait et réflexion -->
-  <section class="card" id="reflectionCard">
-    <h2>4. Mon portrait et mes objectifs</h2>
-    <p class="small">Réponds avec tes mots. Ton résumé sera généré à partir de tes réponses.</p>
-
-    <h3>Mon portrait d'apprenant</h3>
-    <label for="r_forces">Mes forces comme apprenant (ce qui m'aide à comprendre)</label>
-    <textarea id="r_forces"></textarea>
-    <label for="r_defis">Mes défis (ce qui est plus difficile pour moi)</label>
-    <textarea id="r_defis"></textarea>
-    <label for="r_usage">Comment j'utilise déjà l'IA (école, loisirs, travail…)</label>
-    <textarea id="r_usage"></textarea>
-
-    <h3>Ma réflexion sur la vidéo</h3>
-    <label for="r_retiens">Ce que je retiens le plus sur le fonctionnement d'un grand modèle de langage</label>
-    <textarea id="r_retiens"></textarea>
-    <label for="r_surpris">Ce qui m'a surpris ou fait réfléchir</label>
-    <textarea id="r_surpris"></textarea>
-    <label for="r_citoyen">Puisqu'un chatbot prédit des mots probables sans « savoir » s'il a raison, quelle précaution vais-je prendre comme citoyen?</label>
-    <textarea id="r_citoyen"></textarea>
-
-    <h3>Mon plan d'action personnalisé</h3>
-    <label for="p_objectif">Mon objectif (précis et réaliste)</label>
-    <textarea id="p_objectif" placeholder="Ex. : Vérifier dans au moins deux sources fiables toute information importante donnée par un chatbot."></textarea>
-    <label for="p_moyens">Les moyens que je vais prendre</label>
-    <textarea id="p_moyens"></textarea>
-    <div class="row">
-      <div><label for="p_echeance">Échéance</label><input type="text" id="p_echeance" placeholder="Ex. : d'ici la fin de l'étape"></div>
-      <div><label for="p_indicateur">Comment je saurai que j'ai réussi</label><input type="text" id="p_indicateur"></div>
-    </div>
-
-    <div class="instruction" style="margin-top:18px">
-      📋 Clique sur <strong>COPIER MON RÉSUMÉ</strong>, puis colle-le (<kbd>Ctrl</kbd>+<kbd>V</kbd> ou <kbd>Cmd</kbd>+<kbd>V</kbd>) dans la section <strong>« Citoyenneté IA – Réflexion et plan d'action »</strong> de ton portfolio ou de ton OneNote.
-    </div>
-    <div class="modal-actions" style="justify-content:center">
-      <button class="big" id="btnCopySummary">📋 COPIER MON RÉSUMÉ</button>
-    </div>
-    <div id="fallbackBox">
-      <p class="notice">La copie automatique est bloquée par ce navigateur. Le texte ci-dessous est déjà sélectionné : appuie sur <kbd>Ctrl</kbd>+<kbd>C</kbd> (ou <kbd>Cmd</kbd>+<kbd>C</kbd>), puis colle-le dans ton portfolio.</p>
-      <textarea id="fallbackText" readonly></textarea>
-    </div>
-  </section>
 </main>
 
 <!-- Fenêtre question -->
@@ -490,71 +448,6 @@ function downloadImg(){
   a.download="resultat_citoyennete_IA_"+($("nom").value.trim().replace(/\s+/g,"_")||"eleve")+".png";
   a.href=cv.toDataURL("image/png"); document.body.appendChild(a); a.click(); a.remove();
 }
-
-/* =========================================================
-   RÉSUMÉ + COPIE ROBUSTE
-   ========================================================= */
-function v(id){return $(id).value.trim()||"(non répondu)";}
-function buildSummary(){
-  const s=score(), L=["A","B","C","D"];
-  let t="";
-  t+="CITOYENNETÉ IA – RÉFLEXION ET PLAN D'ACTION\n";
-  t+="Élève : "+($("nom").value.trim()||"(nom)")+"   Groupe : "+($("groupe").value.trim()||"(groupe)")+"\n";
-  t+="Date : "+new Date().toLocaleDateString("fr-CA")+"\n";
-  t+="Vidéo : « "+ACTIVITE.titre_video+" » – "+ACTIVITE.chaine+" ("+ACTIVITE.duree_totale_sec+" s)\n";
-  t+="Pointage au questionnaire : "+s+"/"+TOTAL+" ("+Math.round(s/TOTAL*100)+" %)\n\n";
-  t+="— Détail des réponses —\n";
-  ACTIVITE.questions.forEach((q,i)=>{
-    const r=resultats[i];
-    t+="Q"+(i+1)+" ("+q.chapitre+") : "+(r?(r.correct?"réussie":"à revoir – bonne réponse : "+L[q.bonne]+") "+q.choix[q.bonne])+" ["+fmt(q.retour_en_arriere_si_erreur_sec)+"]":"non répondue")+"\n";
-  });
-  t+="\n— Mon portrait d'apprenant —\n";
-  t+="Mes forces : "+v("r_forces")+"\n";
-  t+="Mes défis : "+v("r_defis")+"\n";
-  t+="Mon utilisation actuelle de l'IA : "+v("r_usage")+"\n";
-  t+="\n— Ma réflexion —\n";
-  t+="Ce que je retiens : "+v("r_retiens")+"\n";
-  t+="Ce qui m'a surpris : "+v("r_surpris")+"\n";
-  t+="Ma précaution comme citoyen : "+v("r_citoyen")+"\n";
-  t+="\n— Mon plan d'action personnalisé —\n";
-  t+="Objectif : "+v("p_objectif")+"\n";
-  t+="Moyens : "+v("p_moyens")+"\n";
-  t+="Échéance : "+v("p_echeance")+"\n";
-  t+="Indicateur de réussite : "+v("p_indicateur")+"\n";
-  return t;
-}
-
-/* Méthode 2 : textarea caché + execCommand (anciens navigateurs, iPad/Safari, iframes) */
-function legacyCopy(text){
-  const ta=document.createElement("textarea");
-  ta.value=text; ta.setAttribute("readonly","");
-  ta.style.position="fixed"; ta.style.top="0"; ta.style.left="0"; ta.style.opacity="0"; ta.style.fontSize="16px";
-  document.body.appendChild(ta);
-  const sel=document.getSelection(), prev=sel&&sel.rangeCount?sel.getRangeAt(0):null;
-  ta.focus(); ta.select(); ta.setSelectionRange(0,text.length); // iOS
-  let ok=false; try{ ok=document.execCommand("copy"); }catch(e){ ok=false; }
-  document.body.removeChild(ta);
-  if(prev&&sel){ sel.removeAllRanges(); sel.addRange(prev); }
-  return ok;
-}
-/* Méthode 3 : affichage du texte pré-sélectionné pour copie manuelle */
-function manualCopy(text){
-  $("fallbackBox").style.display="block";
-  const ta=$("fallbackText"); ta.value=text; ta.focus(); ta.select();
-  ta.scrollIntoView({behavior:"smooth",block:"center"});
-}
-async function copyText(text){
-  // Méthode 1 : API Clipboard moderne (https requis)
-  if(navigator.clipboard && window.isSecureContext){
-    try{ await navigator.clipboard.writeText(text); return true; }catch(e){}
-  }
-  if(legacyCopy(text)) return true;
-  manualCopy(text); return false;
-}
-$("btnCopySummary").onclick=async()=>{
-  const ok=await copyText(buildSummary());
-  if(ok){ $("fallbackBox").style.display="none"; toast("✅ Résumé copié! Colle-le dans la section « Citoyenneté IA – Réflexion et plan d'action » de ton portfolio."); }
-};
 
 renderDots();
 </script>
